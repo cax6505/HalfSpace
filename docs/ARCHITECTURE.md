@@ -4,7 +4,7 @@
 
 - `apps/web` is the Next.js App Router and TypeScript user interface. It will call the API for match and sequence views.
 - `services/api` is a Python 3.12 FastAPI service. SQLAlchemy owns Postgres connections; Pydantic settings provide typed configuration. `app.ingest` is the repeatable StatsBomb open-data loader.
-- `ml` holds PyTorch training and inference code. Sequence tokens are stored separately from optional 384-dimensional embeddings.
+- `ml` holds deterministic PyTorch contrastive training, label/evaluation tooling, ONNX export, and pgvector indexing. Sequence embeddings are 256-dimensional.
 - `docs` records architecture and design constraints.
 - Postgres is the source of truth. Local Compose uses pgvector's Postgres 16 image; Neon can be used by setting `DATABASE_URL`. Redis is available for future job queues and cache use.
 
@@ -18,7 +18,7 @@
 ## Decisions and tradeoffs
 
 - **Postgres plus JSONB:** relational columns support joins and filters, while `raw`, `location`, and `tokens` retain source structure without prematurely flattening every StatsBomb field. Neon works as standard Postgres.
-- **pgvector:** enabled at schema initialization to support future similarity search. The embedding column is nullable, so ingestion does not require a model. Add a vector index only after selecting a distance metric and measuring corpus/query scale.
+- **pgvector:** enabled at schema initialization for cosine similarity. The nullable 256-dimensional embedding column lets ingestion run before training. An HNSW cosine index is built after embedding generation; `m` and `ef_search` are swept against exact neighbors and their recall/latency results are recorded in `docs/EVALS.md`.
 - **Rule-based phase boundaries:** possession ID changes are the hard boundary; restarts and pauses over ten seconds split tactical phases within a possession. Rules are deterministic and unit-tested, and can later be versioned when labels evolve.
 - **Idempotency:** stable StatsBomb match/event identifiers use primary keys, and upserts refresh changed source rows. A possession's derived sequence rows are replaced transactionally when recomputed.
 - **Indexes:** primary keys serve direct entity lookups; `events_match_order_idx` supports ordered match timelines, `events_possession_idx` supports possession extraction, and `possessions_match_idx` and `sequences_match_possession_idx` support match-to-possession/phase traversal. `sequences_tag_idx` serves tag counts and tag filtering. These indexes avoid indexing every JSONB field, which would add ingest cost without an established query need.
