@@ -18,6 +18,13 @@ def test_restart_is_a_set_piece_phase():
     assert result[1].tag == "set-piece"
 
 
+def test_pass_type_corner_is_a_set_piece_restart():
+    events = [event(1, "Pass", location=[30, 20]), event(2, "Pass", second=1, location=[100, 40], **{"pass": {"type": {"name": "Corner"}}})]
+    result = segment_possessions(events)
+    assert len(result) == 2
+    assert result[1].tag == "set-piece"
+
+
 def test_counterpress_recovery_has_press_win_tag():
     result = segment_possessions([event(1, "Ball Recovery", counterpress=True)])
     assert result[0].tag == "press-win-trigger"

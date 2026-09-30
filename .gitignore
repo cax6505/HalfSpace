@@ -6,3 +6,8 @@ __pycache__/
 node_modules/
 .next/
 postgres_data/
+ml/artifacts/
+mlruns/
+services/api/evals/search_results.json
+services/api/evals/promptfoo-results.json
+services/api/evals/scout_results.json

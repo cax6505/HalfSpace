@@ -22,9 +22,15 @@ def _minute(event: dict[str, Any]) -> float:
     return float(event.get("minute", 0)) + float(event.get("second", 0)) / 60
 
 
+def _is_restart(event: dict[str, Any]) -> bool:
+    restart_names = {"Starting XI", "Kick Off", "Corner", "Free Kick", "Penalty", "Throw-in"}
+    if _name(event, "type") in restart_names:
+        return True
+    return _name(event.get("pass", {}), "type") in {"Corner", "Free Kick", "Penalty", "Throw-in"}
+
+
 def _tag(events: list[dict[str, Any]]) -> str:
-    types = [_name(event, "type") for event in events]
-    if any(t in {"Starting XI", "Kick Off", "Corner", "Free Kick", "Penalty", "Throw-in"} for t in types):
+    if any(_is_restart(event) for event in events):
         return "set-piece"
     if any(_name(e, "type") == "Ball Recovery" and e.get("counterpress") for e in events):
         return "press-win-trigger"
@@ -49,7 +55,7 @@ def segment_possessions(events: list[dict[str, Any]]) -> list[Sequence]:
     groups: list[list[dict[str, Any]]] = []
     current: list[dict[str, Any]] = []
     for event in ordered:
-        restart = _name(event, "type") in {"Starting XI", "Kick Off", "Corner", "Free Kick", "Penalty", "Throw-in"}
+        restart = _is_restart(event)
         gap = current and (_minute(event) - _minute(current[-1])) * 60 > 10
         changed = current and event.get("possession") != current[-1].get("possession")
         if current and (restart or gap or changed):

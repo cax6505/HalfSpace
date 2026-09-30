@@ -63,6 +63,9 @@ def ingest() -> Counter[str]:
     counts: Counter[str] = Counter()
     with httpx.Client() as client:
         competitions = fetch_json(client, f"{base}/competitions.json")
+        with engine.begin() as conn:
+            for competition in competitions:
+                conn.execute(text("INSERT INTO competitions(id,name) VALUES(:id,:name) ON CONFLICT(id) DO UPDATE SET name=excluded.name"), {"id": competition["competition_id"], "name": competition.get("competition_name", str(competition["competition_id"]))})
         configured = os.getenv("COMPETITION_IDS", settings.competition_ids).strip()
         ids = [int(value) for value in configured.split()] if configured else list(dict.fromkeys(int(c["competition_id"]) for c in competitions))[:2]
         if len(ids) < 2 and not configured:
@@ -95,6 +98,9 @@ def ingest() -> Counter[str]:
                                 grouped.setdefault(int(pid), []).append(event)
                         for pid, group in grouped.items():
                             times = [(e.get("minute", 0) or 0) * 60 + (e.get("second", 0) or 0) for e in group]
+                            possession_team = group[0].get("possession_team") or {}
+                            if possession_team.get("id") is not None:
+                                conn.execute(text("INSERT INTO teams(id,name) VALUES(:id,:name) ON CONFLICT(id) DO UPDATE SET name=excluded.name"), {"id": possession_team["id"], "name": possession_team.get("name", "Unknown")})
                             conn.execute(text("""INSERT INTO possessions(match_id,possession_id,team_id,start_seconds,end_seconds) VALUES(:match,:pid,:team,:start,:end)
                               ON CONFLICT(match_id,possession_id) DO UPDATE SET team_id=excluded.team_id,start_seconds=excluded.start_seconds,end_seconds=excluded.end_seconds"""), {"match": match_id, "pid": pid, "team": (group[0].get("possession_team") or {}).get("id"), "start": min(times), "end": max(times)})
                             # Replace phases for this possession so reruns reflect changed source data.

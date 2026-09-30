@@ -1,0 +1,100 @@
+{"vars": {"query": "Find counter-attack sequences", "expected_filters": {"phase": "counter-attack"}}}
+{"vars": {"query": "Show me examples of counter-attack play", "expected_filters": {"phase": "counter-attack"}}}
+{"vars": {"query": "Find build-up sequences", "expected_filters": {"phase": "build-up"}}}
+{"vars": {"query": "Show me examples of build-up play", "expected_filters": {"phase": "build-up"}}}
+{"vars": {"query": "Find set-piece sequences", "expected_filters": {"phase": "set-piece"}}}
+{"vars": {"query": "Show me examples of set-piece play", "expected_filters": {"phase": "set-piece"}}}
+{"vars": {"query": "Find press-win-trigger sequences", "expected_filters": {"phase": "press-win-trigger"}}}
+{"vars": {"query": "Show me examples of press-win-trigger play", "expected_filters": {"phase": "press-win-trigger"}}}
+{"vars": {"query": "Find zone-entry sequences", "expected_filters": {"phase": "zone-entry"}}}
+{"vars": {"query": "Show me examples of zone-entry play", "expected_filters": {"phase": "zone-entry"}}}
+{"vars": {"query": "Find sequences in the own third", "expected_filters": {"zone": {"x_min": 0, "x_max": 3, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Show attacking sequences from the own third", "expected_filters": {"zone": {"x_min": 0, "x_max": 3, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find sequences in the middle third", "expected_filters": {"zone": {"x_min": 4, "x_max": 7, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Show attacking sequences from the middle third", "expected_filters": {"zone": {"x_min": 4, "x_max": 7, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find sequences in the attacking third", "expected_filters": {"zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Show attacking sequences from the attacking third", "expected_filters": {"zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find sequences in the left channel", "expected_filters": {"zone": {"x_min": 0, "x_max": 11, "y_min": 0, "y_max": 1}}}}
+{"vars": {"query": "Show attacking sequences from the left channel", "expected_filters": {"zone": {"x_min": 0, "x_max": 11, "y_min": 0, "y_max": 1}}}}
+{"vars": {"query": "Find sequences in the central channel", "expected_filters": {"zone": {"x_min": 0, "x_max": 11, "y_min": 2, "y_max": 5}}}}
+{"vars": {"query": "Show attacking sequences from the central channel", "expected_filters": {"zone": {"x_min": 0, "x_max": 11, "y_min": 2, "y_max": 5}}}}
+{"vars": {"query": "Find sequences in the right channel", "expected_filters": {"zone": {"x_min": 0, "x_max": 11, "y_min": 6, "y_max": 7}}}}
+{"vars": {"query": "Show attacking sequences from the right channel", "expected_filters": {"zone": {"x_min": 0, "x_max": 11, "y_min": 6, "y_max": 7}}}}
+{"vars": {"query": "Show possessions triggered by a ball recovery", "expected_filters": {"trigger": "ball recovery"}}}
+{"vars": {"query": "Show possessions triggered by a counterpress", "expected_filters": {"trigger": "counterpress"}}}
+{"vars": {"query": "Show possessions triggered by a interception", "expected_filters": {"trigger": "interception"}}}
+{"vars": {"query": "Show possessions triggered by a tackle", "expected_filters": {"trigger": "tackle"}}}
+{"vars": {"query": "Show possessions triggered by a pressure", "expected_filters": {"trigger": "pressure"}}}
+{"vars": {"query": "Show possessions triggered by a clearance", "expected_filters": {"trigger": "clearance"}}}
+{"vars": {"query": "Show possessions triggered by a keeper distribution", "expected_filters": {"trigger": "keeper distribution"}}}
+{"vars": {"query": "Show possessions triggered by a turnover", "expected_filters": {"trigger": "turnover"}}}
+{"vars": {"query": "Show possessions triggered by a second ball", "expected_filters": {"trigger": "second ball"}}}
+{"vars": {"query": "Show possessions triggered by a press win", "expected_filters": {"trigger": "press win"}}}
+{"vars": {"query": "Find build-up sequences for Arsenal", "expected_filters": {"phase": "build-up", "team": "Arsenal"}}}
+{"vars": {"query": "Find build-up sequences for Barcelona", "expected_filters": {"phase": "build-up", "team": "Barcelona"}}}
+{"vars": {"query": "Find build-up sequences for Bayern Munich", "expected_filters": {"phase": "build-up", "team": "Bayern Munich"}}}
+{"vars": {"query": "Find build-up sequences for Chelsea", "expected_filters": {"phase": "build-up", "team": "Chelsea"}}}
+{"vars": {"query": "Find build-up sequences for Liverpool", "expected_filters": {"phase": "build-up", "team": "Liverpool"}}}
+{"vars": {"query": "Find build-up sequences for Manchester City", "expected_filters": {"phase": "build-up", "team": "Manchester City"}}}
+{"vars": {"query": "Find build-up sequences for Manchester United", "expected_filters": {"phase": "build-up", "team": "Manchester United"}}}
+{"vars": {"query": "Find build-up sequences for Real Madrid", "expected_filters": {"phase": "build-up", "team": "Real Madrid"}}}
+{"vars": {"query": "Find build-up sequences for Tottenham Hotspur", "expected_filters": {"phase": "build-up", "team": "Tottenham Hotspur"}}}
+{"vars": {"query": "Find build-up sequences for Juventus", "expected_filters": {"phase": "build-up", "team": "Juventus"}}}
+{"vars": {"query": "Show counter-attacks in competition 1", "expected_filters": {"phase": "counter-attack", "competition": "1"}}}
+{"vars": {"query": "Show counter-attacks in competition 2", "expected_filters": {"phase": "counter-attack", "competition": "2"}}}
+{"vars": {"query": "Show counter-attacks in competition 3", "expected_filters": {"phase": "counter-attack", "competition": "3"}}}
+{"vars": {"query": "Show counter-attacks in competition 4", "expected_filters": {"phase": "counter-attack", "competition": "4"}}}
+{"vars": {"query": "Show counter-attacks in competition 5", "expected_filters": {"phase": "counter-attack", "competition": "5"}}}
+{"vars": {"query": "Show counter-attacks in competition 6", "expected_filters": {"phase": "counter-attack", "competition": "6"}}}
+{"vars": {"query": "Show counter-attacks in competition 7", "expected_filters": {"phase": "counter-attack", "competition": "7"}}}
+{"vars": {"query": "Show counter-attacks in competition 8", "expected_filters": {"phase": "counter-attack", "competition": "8"}}}
+{"vars": {"query": "Show counter-attacks in competition 9", "expected_filters": {"phase": "counter-attack", "competition": "9"}}}
+{"vars": {"query": "Show counter-attacks in competition 10", "expected_filters": {"phase": "counter-attack", "competition": "10"}}}
+{"vars": {"query": "Find sequences with outcome Complete", "expected_filters": {"outcome": "Complete"}}}
+{"vars": {"query": "Find sequences with outcome Incomplete", "expected_filters": {"outcome": "Incomplete"}}}
+{"vars": {"query": "Find sequences with outcome Success", "expected_filters": {"outcome": "Success"}}}
+{"vars": {"query": "Find sequences with outcome Saved", "expected_filters": {"outcome": "Saved"}}}
+{"vars": {"query": "Find sequences with outcome Goal", "expected_filters": {"outcome": "Goal"}}}
+{"vars": {"query": "Find sequences with outcome Blocked", "expected_filters": {"outcome": "Blocked"}}}
+{"vars": {"query": "Find sequences with outcome Out", "expected_filters": {"outcome": "Out"}}}
+{"vars": {"query": "Find sequences with outcome Lost", "expected_filters": {"outcome": "Lost"}}}
+{"vars": {"query": "Find sequences with outcome Won", "expected_filters": {"outcome": "Won"}}}
+{"vars": {"query": "Find sequences with outcome Offside", "expected_filters": {"outcome": "Offside"}}}
+{"vars": {"query": "Find counter-attack sequences for Arsenal in the own third", "expected_filters": {"phase": "counter-attack", "team": "Arsenal", "zone": {"x_min": 0, "x_max": 3, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find build-up sequences for Barcelona in the middle third", "expected_filters": {"phase": "build-up", "team": "Barcelona", "zone": {"x_min": 4, "x_max": 7, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find set-piece sequences for Bayern Munich in the attacking third", "expected_filters": {"phase": "set-piece", "team": "Bayern Munich", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find press-win-trigger sequences for Chelsea in the left channel", "expected_filters": {"phase": "press-win-trigger", "team": "Chelsea", "zone": {"x_min": 0, "x_max": 11, "y_min": 0, "y_max": 1}}}}
+{"vars": {"query": "Find zone-entry sequences for Liverpool in the central channel", "expected_filters": {"phase": "zone-entry", "team": "Liverpool", "zone": {"x_min": 0, "x_max": 11, "y_min": 2, "y_max": 5}}}}
+{"vars": {"query": "Find counter-attack sequences for Manchester City in the right channel", "expected_filters": {"phase": "counter-attack", "team": "Manchester City", "zone": {"x_min": 0, "x_max": 11, "y_min": 6, "y_max": 7}}}}
+{"vars": {"query": "Find build-up sequences for Manchester United in the own third", "expected_filters": {"phase": "build-up", "team": "Manchester United", "zone": {"x_min": 0, "x_max": 3, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find set-piece sequences for Real Madrid in the middle third", "expected_filters": {"phase": "set-piece", "team": "Real Madrid", "zone": {"x_min": 4, "x_max": 7, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find press-win-trigger sequences for Tottenham Hotspur in the attacking third", "expected_filters": {"phase": "press-win-trigger", "team": "Tottenham Hotspur", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find zone-entry sequences for Juventus in the left channel", "expected_filters": {"phase": "zone-entry", "team": "Juventus", "zone": {"x_min": 0, "x_max": 11, "y_min": 0, "y_max": 1}}}}
+{"vars": {"query": "Find complete outcomes during counter-attack play", "expected_filters": {"phase": "counter-attack", "outcome": "Complete"}}}
+{"vars": {"query": "Find incomplete outcomes during build-up play", "expected_filters": {"phase": "build-up", "outcome": "Incomplete"}}}
+{"vars": {"query": "Find success outcomes during set-piece play", "expected_filters": {"phase": "set-piece", "outcome": "Success"}}}
+{"vars": {"query": "Find saved outcomes during press-win-trigger play", "expected_filters": {"phase": "press-win-trigger", "outcome": "Saved"}}}
+{"vars": {"query": "Find goal outcomes during zone-entry play", "expected_filters": {"phase": "zone-entry", "outcome": "Goal"}}}
+{"vars": {"query": "Find blocked outcomes during counter-attack play", "expected_filters": {"phase": "counter-attack", "outcome": "Blocked"}}}
+{"vars": {"query": "Find out outcomes during build-up play", "expected_filters": {"phase": "build-up", "outcome": "Out"}}}
+{"vars": {"query": "Find lost outcomes during set-piece play", "expected_filters": {"phase": "set-piece", "outcome": "Lost"}}}
+{"vars": {"query": "Find won outcomes during press-win-trigger play", "expected_filters": {"phase": "press-win-trigger", "outcome": "Won"}}}
+{"vars": {"query": "Find offside outcomes during zone-entry play", "expected_filters": {"phase": "zone-entry", "outcome": "Offside"}}}
+{"vars": {"query": "Show me attacks that move quickly toward goal", "expected_filters": {}}}
+{"vars": {"query": "Find patient possession around the box", "expected_filters": {}}}
+{"vars": {"query": "Sequences where the defense wins the ball high", "expected_filters": {}}}
+{"vars": {"query": "How does the team escape pressure?", "expected_filters": {}}}
+{"vars": {"query": "Show dangerous transitions after a turnover", "expected_filters": {}}}
+{"vars": {"query": "Find wide progression followed by a cross", "expected_filters": {}}}
+{"vars": {"query": "Which possessions enter the penalty area?", "expected_filters": {}}}
+{"vars": {"query": "Show sustained attacks that end in a shot", "expected_filters": {}}}
+{"vars": {"query": "Find defensive recoveries and the next pass", "expected_filters": {}}}
+{"vars": {"query": "How are set pieces defended?", "expected_filters": {}}}
+{"vars": {"query": "Find counter-attack play after a ball recovery in the attacking third", "expected_filters": {"phase": "counter-attack", "trigger": "ball recovery", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find build-up play after a counterpress in the attacking third", "expected_filters": {"phase": "build-up", "trigger": "counterpress", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find set-piece play after a interception in the attacking third", "expected_filters": {"phase": "set-piece", "trigger": "interception", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find press-win-trigger play after a tackle in the attacking third", "expected_filters": {"phase": "press-win-trigger", "trigger": "tackle", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find zone-entry play after a pressure in the attacking third", "expected_filters": {"phase": "zone-entry", "trigger": "pressure", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find counter-attack play after a clearance in the attacking third", "expected_filters": {"phase": "counter-attack", "trigger": "clearance", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find build-up play after a keeper distribution in the attacking third", "expected_filters": {"phase": "build-up", "trigger": "keeper distribution", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}
+{"vars": {"query": "Find set-piece play after a turnover in the attacking third", "expected_filters": {"phase": "set-piece", "trigger": "turnover", "zone": {"x_min": 8, "x_max": 11, "y_min": 0, "y_max": 7}}}}

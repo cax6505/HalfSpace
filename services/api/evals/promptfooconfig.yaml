@@ -1,0 +1,13 @@
+# Run from this directory with: npx promptfoo eval -c promptfooconfig.yaml
+description: HalfSpace search intent schema regression (100 cases)
+prompts:
+  - file://search_intent_prompt.txt
+providers:
+  - openai:gpt-4o-mini
+tests: file://promptfoo_cases.jsonl
+defaultTest:
+  assert:
+    - type: javascript
+      value: file://assert_filters.js
+      threshold: 1
+outputPath: ./promptfoo-results.json
