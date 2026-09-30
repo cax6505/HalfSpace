@@ -12,7 +12,7 @@ from typing import Any, AsyncIterator
 
 from openai import OpenAI
 from pydantic import ValidationError
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 
 from app.db import get_engine
 from app.search_models import SearchFilters, SearchHit, SearchIntent, SearchRequest
@@ -97,8 +97,10 @@ def _vector_candidates(vector: list[float], filters: SearchFilters, exclude_id: 
     where, params = _filter_sql(filters)
     params.update(vector="[" + ",".join(str(v) for v in vector) + "]", limit=settings.search_candidate_limit, exclude_id=exclude_id)
     sql = text(f"""SELECT s.id,s.match_id,s.possession_id,s.phase_index,s.tag,s.tokens,
+        p.team_id,t.name AS team_name,c.name AS competition_name,
         1-(s.embedding <=> CAST(:vector AS vector)) AS score
         FROM sequences s JOIN matches m ON m.id=s.match_id LEFT JOIN competitions c ON c.id=m.competition_id
+        LEFT JOIN possessions p ON p.match_id=s.match_id AND p.possession_id=s.possession_id LEFT JOIN teams t ON t.id=p.team_id
         WHERE s.embedding IS NOT NULL AND (CAST(:exclude_id AS bigint) IS NULL OR s.id != :exclude_id){where}
         ORDER BY s.embedding <=> CAST(:vector AS vector) LIMIT :limit""")
     with get_engine().connect() as conn:
@@ -110,8 +112,10 @@ def _fts_candidates(query: str, filters: SearchFilters) -> list[dict[str, Any]]:
     where, params = _filter_sql(filters)
     params.update(query=query, limit=settings.search_candidate_limit)
     sql = text(f"""SELECT s.id,s.match_id,s.possession_id,s.phase_index,s.tag,s.tokens,
+        p.team_id,t.name AS team_name,c.name AS competition_name,
         ts_rank(to_tsvector('english',s.tag || ' ' || s.tokens::text),websearch_to_tsquery('english',:query)) AS score
         FROM sequences s JOIN matches m ON m.id=s.match_id LEFT JOIN competitions c ON c.id=m.competition_id
+        LEFT JOIN possessions p ON p.match_id=s.match_id AND p.possession_id=s.possession_id LEFT JOIN teams t ON t.id=p.team_id
         WHERE to_tsvector('english',s.tag || ' ' || s.tokens::text) @@ websearch_to_tsquery('english',:query){where}
         ORDER BY score DESC LIMIT :limit""")
     with get_engine().connect() as conn:
@@ -169,7 +173,19 @@ def _exemplar_query(sequence_id: int) -> tuple[list[float], str]:
 def _result_rows(rows: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
     hits = []
     for row in rows[:limit]:
-        hits.append(SearchHit(sequence_id=int(row["id"]), match_id=int(row["match_id"]), possession_id=int(row["possession_id"]), phase_index=int(row["phase_index"]), tag=row["tag"], score=float(row["score"]), tokens=row["tokens"] if isinstance(row["tokens"], list) else json.loads(row["tokens"]), rerank_score=row.get("rerank_score")).model_dump())
+        tokens = row["tokens"] if isinstance(row["tokens"], list) else json.loads(row["tokens"])
+        event_ids = [token.get("event_id") for token in tokens if token.get("event_id")]
+        if event_ids:
+            statement = text("SELECT event_id,frame,visible_area FROM freeze_frames WHERE visible_area IS NOT NULL AND event_id IN :ids ORDER BY id").bindparams(bindparam("ids", expanding=True))
+            with get_engine().connect() as conn:
+                snapshots = conn.execute(statement, {"ids": event_ids}).mappings().all()
+            by_event = {str(snapshot["event_id"]): snapshot for snapshot in snapshots}
+            for token in tokens:
+                snapshot = by_event.get(str(token.get("event_id")))
+                if snapshot:
+                    token["tracking_frame"] = snapshot["frame"] if isinstance(snapshot["frame"], list) else json.loads(snapshot["frame"])
+                    token["visible_area"] = snapshot["visible_area"] if isinstance(snapshot["visible_area"], list) else json.loads(snapshot["visible_area"])
+        hits.append({**SearchHit(sequence_id=int(row["id"]), match_id=int(row["match_id"]), possession_id=int(row["possession_id"]), phase_index=int(row["phase_index"]), tag=row["tag"], score=float(row["score"]), tokens=tokens, rerank_score=row.get("rerank_score")).model_dump(), "team_name": row.get("team_name"), "team_id": row.get("team_id"), "competition_name": row.get("competition_name")})
     return hits
 
 
@@ -234,7 +250,7 @@ async def _cache():
 async def run_search(request: SearchRequest) -> AsyncIterator[dict[str, Any]]:
     start = time.perf_counter()
     cache = await _cache()
-    key = "halfspace:search:" + hashlib.sha256(json.dumps([request.query.casefold().strip(), request.limit, settings.search_llm_model, settings.search_embedding_model, settings.search_cross_encoder, settings.search_rrf_k, settings.search_candidate_limit]).encode()).hexdigest()
+    key = "halfspace:search:" + hashlib.sha256(json.dumps([request.query.casefold().strip(), request.filters.model_dump() if request.filters else None, request.limit, settings.search_llm_model, settings.search_embedding_model, settings.search_cross_encoder, settings.search_rrf_k, settings.search_candidate_limit], sort_keys=True).encode()).hexdigest()
     if cache:
         try:
             cached = await cache.get(key)
@@ -249,6 +265,8 @@ async def run_search(request: SearchRequest) -> AsyncIterator[dict[str, Any]]:
             log.debug("Redis read failed: %s", exc)
     yield {"stage": "parsing"}
     intent, llm_usage = await asyncio.to_thread(parse_intent, request.query)
+    if request.filters is not None:
+        intent = intent.model_copy(update={"filters": request.filters})
     embed_tokens = 0
     yield {"stage": "parsed", "intent": intent.model_dump()}
     if intent.exemplar_sequence_id is not None:

@@ -69,7 +69,7 @@ def planner_node(state: AgentState) -> dict[str, Any]:
         "You are the Planner for a football scouting dossier. Decompose the request into 4-6 independent, answerable questions using different available tools where useful. Prioritize evidence that directly compares team strengths, weaknesses, transition behavior, chance creation, and set pieces. Include the team in tool arguments when relevant. Never invent match or sequence IDs.",
         f"Team: {state['team']}\nScout request: {state['query']}",
     )
-    return {"questions": [question.model_dump() for question in plan.questions], "token_usage": _add_usage(state.get("token_usage", {}), usage), "trace_event": {"step": "planner", "questions": [question.model_dump() for question in plan.questions]}}
+    return {"questions": [question.model_dump() for question in plan.questions], "token_usage": _add_usage(state.get("token_usage", {}), usage), "trace_event": {"step": "planner", "tool_names": list(dict.fromkeys(question.tool for question in plan.questions)), "questions": [question.model_dump() for question in plan.questions]}}
 
 
 def _call_tool(question: dict[str, Any], team: str) -> dict[str, Any]:
@@ -115,7 +115,7 @@ async def retriever_node(state: AgentState) -> dict[str, Any]:
         elif evidence_id:
             positions[evidence_id] = len(combined)
             combined.append(item)
-    return {"evidence": combined, "tool_results": results, "token_usage": usage, "trace_event": {"step": "retriever", "question_count": len(questions), "new_evidence_count": len(combined)-len(old), "errors": errors}}
+    return {"evidence": combined, "tool_results": results, "token_usage": usage, "trace_event": {"step": "retriever", "tool_names": list(dict.fromkeys(question["tool"] for question in questions)), "question_count": len(questions), "new_evidence_count": len(combined)-len(old), "errors": errors}}
 
 
 @traced("scout.tactician")
@@ -126,7 +126,7 @@ def tactician_node(state: AgentState) -> dict[str, Any]:
         "You are the Tactician. Write a concise evidence-led scouting dossier. The overview and every claim must include one or more exact evidence_ids from the supplied evidence. Do not invent IDs. Every factual or numeric statement belongs in a claim. Include numeric checks for numbers in a claim using metric/value pairs that can be verified against cited tool facts. Separate observations from conclusions and avoid overstating heuristic xT or snapshot pitch-control estimates.",
         f"Team: {state['team']}\nRequest: {state['query']}\nTool results:\n{json.dumps(state.get('tool_results', []), default=str)[:15000]}\nEvidence:\n{json.dumps(evidence, default=str)[:25000]}",
     )
-    return {"dossier": dossier.model_dump(), "token_usage": _add_usage(state.get("token_usage", {}), usage), "trace_event": {"step": "tactician", "claim_count": len(dossier.claims)+1}}
+    return {"dossier": dossier.model_dump(), "token_usage": _add_usage(state.get("token_usage", {}), usage), "trace_event": {"step": "tactician", "tool_names": ["structured synthesis"], "claim_count": len(dossier.claims)+1}}
 
 
 @traced("scout.critic")
@@ -138,7 +138,7 @@ def critic_node(state: AgentState) -> dict[str, Any]:
     )
     rounds = state.get("rounds", 0)
     should_continue = critique.request_more_evidence and bool(critique.followup_questions) and rounds < settings.scout_max_rounds
-    result: dict[str, Any] = {"critique": critique.model_dump(), "rounds": rounds + int(should_continue), "continue_review": should_continue, "token_usage": _add_usage(state.get("token_usage", {}), usage), "trace_event": {"step": "critic", "request_more_evidence": should_continue, "concerns": critique.concerns}}
+    result: dict[str, Any] = {"critique": critique.model_dump(), "rounds": rounds + int(should_continue), "continue_review": should_continue, "token_usage": _add_usage(state.get("token_usage", {}), usage), "trace_event": {"step": "critic", "tool_names": ["evidence challenge"], "request_more_evidence": should_continue, "concerns": critique.concerns}}
     if should_continue:
         result["questions"] = [q.model_dump() for q in critique.followup_questions]
     return result
@@ -195,7 +195,7 @@ def verifier_node(state: AgentState) -> dict[str, Any]:
             else: supported_claims.append(claim)
     supported_count = len(supported_claims) + int(supported_overview is not None)
     report = {"team": state["team"], "request": state["query"], "overview": supported_overview, "claims": supported_claims, "dropped_claims": dropped, "evidence": evidence, "verification": {"submitted_claims": len(claims), "supported_claims": supported_count, "dropped_claims": len(dropped)}}
-    return {"verification": report["verification"], "dropped_claims": dropped, "dossier": report, "trace_event": {"step": "verifier", **report["verification"]}}
+    return {"verification": report["verification"], "dropped_claims": dropped, "dossier": report, "trace_event": {"step": "verifier", "tool_names": ["evidence verifier"], **report["verification"]}}
 
 
 def _route_after_critic(state: AgentState) -> str:

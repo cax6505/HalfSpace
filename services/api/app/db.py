@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS events (id text PRIMARY KEY, match_id bigint NOT NULL
 CREATE TABLE IF NOT EXISTS possessions (id bigserial PRIMARY KEY, match_id bigint NOT NULL REFERENCES matches(id) ON DELETE CASCADE, possession_id integer NOT NULL, team_id integer, start_seconds double precision, end_seconds double precision, UNIQUE(match_id, possession_id));
 CREATE TABLE IF NOT EXISTS sequences (id bigserial PRIMARY KEY, match_id bigint NOT NULL REFERENCES matches(id) ON DELETE CASCADE, possession_id integer NOT NULL, phase_index integer NOT NULL, tag text NOT NULL, tokens jsonb NOT NULL, embedding vector(256), UNIQUE(match_id, possession_id, phase_index));
 CREATE TABLE IF NOT EXISTS freeze_frames (id bigserial PRIMARY KEY, event_id text NOT NULL REFERENCES events(id) ON DELETE CASCADE, frame jsonb NOT NULL);
+ALTER TABLE freeze_frames ADD COLUMN IF NOT EXISTS visible_area jsonb;
 CREATE INDEX IF NOT EXISTS events_match_order_idx ON events(match_id, period, event_index);
 CREATE INDEX IF NOT EXISTS events_possession_idx ON events(match_id, possession_id);
 CREATE INDEX IF NOT EXISTS possessions_match_idx ON possessions(match_id, possession_id);

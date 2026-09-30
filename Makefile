@@ -1,4 +1,4 @@
-.PHONY: install ml-install ingest test api web label train evaluate export-onnx index eval-search promptfoo-search annotate-search scout-benchmark mcp
+.PHONY: install ml-install ingest test api web label train evaluate export-onnx index eval-search promptfoo-search annotate-search scout-benchmark mcp demo-up demo-down e2e eval-gate
 
 install:
 	python3.12 -m pip install -e 'services/api[dev]'
@@ -15,10 +15,22 @@ test:
 	cd services/api && python3.12 -m pytest
 
 api:
-	cd services/api && uvicorn app.main:app --reload
+	cd services/api && python3.12 -m app.start
 
 web:
 	cd apps/web && npm run dev
+
+demo-up:
+	docker compose up --build -d postgres redis api web
+
+demo-down:
+	docker compose down
+
+e2e:
+	cd apps/web && npx playwright install chromium && npm run test:e2e
+
+eval-gate:
+	python3 services/api/evals/check_fixtures.py
 
 label:
 	python3.12 ml/label.py --count 200

@@ -1,0 +1,10 @@
+{
+  "name": "halfspace",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/web run build",
+    "start": "npm --prefix apps/web run start",
+    "test:e2e": "npm --prefix apps/web run test:e2e"
+  }
+}

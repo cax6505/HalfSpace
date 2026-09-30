@@ -20,5 +20,31 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+  api:
+    build:
+      context: ./services/api
+    environment:
+      DATABASE_URL: postgresql+psycopg://halfspace:halfspace@postgres:5432/halfspace
+      REDIS_URL: redis://redis:6379/0
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      SEARCH_LLM_MODEL: ${SEARCH_LLM_MODEL:-gpt-4o-mini}
+      SEARCH_EMBEDDING_MODEL: ${SEARCH_EMBEDDING_MODEL:-text-embedding-3-small}
+    ports: ["8000:8000"]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+  web:
+    build:
+      context: ./apps/web
+    environment:
+      API_URL: http://api:8000
+    ports: ["3000:3000"]
+    depends_on:
+      api: { condition: service_healthy }
 volumes:
   postgres_data:

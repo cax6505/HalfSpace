@@ -52,8 +52,36 @@ def _token(event: dict[str, Any], previous: dict[str, Any] | None) -> dict[str, 
     outcome = ((event.get("pass") or {}).get("outcome") or {}).get("name") or ((event.get("shot") or {}).get("outcome") or {}).get("name") or "none"
     now = (event.get("minute", 0) or 0) * 60 + (event.get("second", 0) or 0)
     before = ((previous or {}).get("minute", 0) or 0) * 60 + ((previous or {}).get("second", 0) or 0)
-    token = SequenceToken(event_type=(event.get("type") or {}).get("name", "Unknown"), zone=(min(11, max(0, int(x / 120 * 12))), min(7, max(0, int(y / 80 * 8)))), outcome=outcome, time_delta=max(0, now - before))
+    home_id = event.get("_home_team_id")
+    possession_team_id = (event.get("possession_team") or {}).get("id")
+    period = int(event.get("period") or 1)
+    first_direction_right = period in (1, 4)
+    attacking_right = None if possession_team_id is None or home_id is None else ((possession_team_id == home_id) == first_direction_right)
+    raw_end = (event.get("pass") or {}).get("end_location") or (event.get("carry") or {}).get("end_location") or (event.get("shot") or {}).get("end_location")
+    end_location = (float(raw_end[0]), float(raw_end[1])) if isinstance(raw_end, list) and len(raw_end) >= 2 else None
+    token = SequenceToken(event_type=(event.get("type") or {}).get("name", "Unknown"), zone=(min(11, max(0, int(x / 120 * 12))), min(7, max(0, int(y / 80 * 8)))), outcome=outcome, time_delta=max(0, now - before), event_id=str(event["id"]), location=(x, y) if len(location) >= 2 else None, end_location=end_location, player_id=(event.get("player") or {}).get("id"), team_id=(event.get("team") or {}).get("id"), possession_team_id=possession_team_id, attacking_right=attacking_right)
     return token.model_dump()
+
+
+def _ingest_360(client: httpx.Client, base: str, match_id: int, engine: Any) -> int:
+    """Store available StatsBomb 360 snapshots; many open matches have none."""
+    try:
+        rows = fetch_json(client, f"{base}/three-sixty/{match_id}.json")
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code == 404:
+            return 0
+        raise
+    stored = 0
+    with engine.begin() as conn:
+        for row in rows:
+            event_id = row.get("event_uuid")
+            frame = row.get("freeze_frame")
+            if not event_id or not isinstance(frame, list):
+                continue
+            conn.execute(text("DELETE FROM freeze_frames WHERE event_id=:id AND visible_area IS NOT NULL"), {"id": str(event_id)})
+            conn.execute(text("INSERT INTO freeze_frames(event_id,frame,visible_area) VALUES(:id,CAST(:frame AS jsonb),CAST(:area AS jsonb))"), {"id": str(event_id), "frame": json.dumps(frame), "area": json.dumps(row.get("visible_area")) if row.get("visible_area") is not None else None})
+            stored += 1
+    return stored
 
 
 def ingest() -> Counter[str]:
@@ -89,6 +117,7 @@ def ingest() -> Counter[str]:
                     events = fetch_json(client, f"{base}/events/{match_id}.json")
                     for event in events:
                         event["_match_id"] = match_id
+                        event["_home_team_id"] = (match.get("home_team") or {}).get("home_team_id", (match.get("home_team") or {}).get("id"))
                     grouped: dict[int, list[dict[str, Any]]] = {}
                     with engine.begin() as conn:
                         for event in events:
@@ -109,6 +138,7 @@ def ingest() -> Counter[str]:
                                 tokens = [_token(event, sequence.events[index - 1] if index else None) for index, event in enumerate(sequence.events)]
                                 conn.execute(text("INSERT INTO sequences(match_id,possession_id,phase_index,tag,tokens) VALUES(:match,:pid,:phase,:tag,CAST(:tokens AS jsonb))"), {"match": match_id, "pid": pid, "phase": sequence.phase_index, "tag": sequence.tag, "tokens": json.dumps(tokens)})
                                 counts[sequence.tag] += 1
+                    _ingest_360(client, base, match_id, engine)
     return counts
 
 

@@ -45,3 +45,17 @@ The 50-question benchmark is stored in [scout_cases.jsonl](../services/api/evals
 | Single-agent baseline | Not measured | Not measured | Not measured | Not measured | Not measured | Not measured | Not measured |
 
 Accuracy compares a verified dossier's numeric answer with the SQL-computed scalar. Groundedness is supported claims divided by submitted claims. Hallucination rate is unsupported claims dropped by the verifier divided by submitted claims. Latency includes all tool and model work; cost uses configured API token rates and excludes database and local inference costs. `make scout-benchmark` refreshes this table and writes per-case traces to `services/api/evals/scout_results.json`.
+
+## Product UI checks
+
+`make e2e` runs the two Playwright product flows: command search with filter editing, pitch selection and side-by-side comparison; and dossier claim replay with the trace panel. CI runs both flows against deterministic sample mode. `make eval-gate` verifies the 100-query search fixture, Promptfoo rows, and 50 SQL-grounded dossier questions without external credentials. If CI has `OPENAI_API_KEY`, it also runs the live Promptfoo parse regression.
+
+| UI check | Result | Method |
+|---|---:|---|
+| Playwright core flows | 2/2 passed | Desktop Chromium, sample data, 22-player animation and correct club/league label assertions |
+| Lighthouse performance | 100/100 | Desktop Chrome, production build, `/` sample mode |
+| Lighthouse accessibility | 100/100 | Desktop Chrome, production build, `/` and `/dossier?team=Arsenal` |
+| Mounted-player frame sample | 16.67 ms mean; 16.70 ms p95 | 201 players active in headless Chrome for 3 seconds, rAF callback intervals |
+| Search cached-cold p95 | Not measured | Requires a live API key, indexed corpus, Redis, and cache workload |
+
+The frame timing is a local browser sample, not a device-independent performance guarantee. The product E2E suite and fixture gate do not score retrieval relevance or provider response times.

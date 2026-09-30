@@ -45,6 +45,7 @@ class SearchRequest(BaseModel):
     query: str = Field(min_length=2, max_length=2000)
     limit: int = Field(default=10, ge=1, le=50)
     stream: bool = True
+    filters: SearchFilters | None = None
 
 
 class SearchHit(BaseModel):

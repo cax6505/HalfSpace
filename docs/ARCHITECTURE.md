@@ -10,10 +10,12 @@
 - `docs` records architecture and design constraints.
 - Postgres is the source of truth. Local Compose uses pgvector's Postgres 16 image; Neon can be used by setting `DATABASE_URL`. Redis is available for future job queues and cache use.
 
+The web UI has a search/compare workspace at `/`, a claim-based scouting report at `/dossier`, and the visual component catalog at `/design`. `apps/web/app/api/search` and `apps/web/app/api/scout/dossier` proxy event streams server-side to `API_URL`. When the API is missing, the product uses deterministic, visibly labeled sample records for the primary flows. Live playback normalizes team attack direction from period and possession team, draws a pass/carry/shot arrow only when StatsBomb provides an endpoint, and uses any available 360 snapshots. Without tracking, the UI labels playback as event locations and does not fabricate a full formation. Sample animation is illustrative 11v11, with a separate corner setup for set pieces.
+
 ## Data flow
 
 1. The loader reads the public StatsBomb competitions index, then downloads every season/match for two competitions by default. `COMPETITION_IDS` can select competition IDs explicitly.
-2. Match metadata, teams, players, events, shot freeze frames, and derived possessions are upserted. Source records retain their original JSON in `raw` columns where applicable.
+2. Match metadata, teams, players, events, shot freeze frames, available StatsBomb 360 snapshots/visible areas, and derived possessions are upserted. Source records retain their original JSON in `raw` columns where applicable.
 3. Events are ordered and grouped by possession. A phase starts at possession changes, restart events, or gaps longer than ten seconds. Rule tags are assigned in priority order: set-piece, press-win trigger, counter-attack, zone-entry, then build-up. Each sequence is tokenized into event type, 12×8 pitch zone, outcome, and elapsed seconds from the preceding event.
 4. The web app and model code consume persisted sequences. The model may write vector embeddings back to the sequence row; it is not required for ingestion.
 
@@ -25,6 +27,8 @@
 - **Search parse and cache:** OpenAI structured outputs map requests to a strict Pydantic schema. Schema validation gets one corrective retry. The response uses SSE progress and a Redis semantic cache keyed by normalized query, result limit, and model configuration. Cache misses still return useful search output if Redis is unavailable.
 - **Scout SQL guard:** SQLGlot accepts one `SELECT` over an explicit table allowlist, only allowlisted aggregate/string/date functions, and a projected event or sequence identifier. It clamps `LIMIT`, rejects large/locked/offset queries, executes inside a PostgreSQL read-only transaction, and applies `statement_timeout`. Agent-generated claims are checked against cited tool result IDs and values before appearing as supported dossier claims.
 - **Scout tools:** expected threat is a documented heuristic zone-value calculation, while pitch control is a nearest-player estimate over available StatsBomb 360 snapshots without velocity. The dossier states these methods so estimates are not presented as calibrated tracking models.
+- **Web state:** query, parsed filters, selected sequence, and comparison IDs use browser query parameters. View Transitions apply to explicit list-to-pitch selection; hover previews update in place. Sample data is only a no-credentials interaction path and is not mixed into live API results.
+- **Deployment:** local Compose initializes the schema before serving the API and runs the web app, API, Postgres, and Redis. Vercel serves the Next.js app; the API Dockerfile and Fly manifest are provided for a separate API deployment.
 - **Rule-based phase boundaries:** possession ID changes are the hard boundary; restarts and pauses over ten seconds split tactical phases within a possession. Rules are deterministic and unit-tested, and can later be versioned when labels evolve.
 - **Idempotency:** stable StatsBomb match/event identifiers use primary keys, and upserts refresh changed source rows. A possession's derived sequence rows are replaced transactionally when recomputed.
 - **Indexes:** primary keys serve direct entity lookups; `events_match_order_idx` supports ordered match timelines, `events_possession_idx` supports possession extraction, and `possessions_match_idx` and `sequences_match_possession_idx` support match-to-possession/phase traversal. `sequences_tag_idx` serves tag counts and tag filtering. `sequences_tokens_fts_idx` supports lexical query matching, and partial `sequences_embedding_hnsw` supports cosine ANN over embedded rows. These avoid indexing every JSONB field, which would add ingest cost without an established query need.
@@ -36,4 +40,4 @@
 
 ## Operational commands
 
-`docker compose up -d postgres redis` starts local dependencies. `make ingest` downloads and loads data, then prints the count of generated sequences per tag. `make test` runs the segmentation rule tests. Configure a Neon URL through `DATABASE_URL` for hosted storage.
+`make demo-up` builds and starts the demo stack; `make demo-down` stops it and keeps its data volume. `make ingest` downloads and loads data, then prints the count of generated sequences per tag. `make test` runs API unit tests, `make e2e` runs browser product flows, and `make eval-gate` validates tracked evaluation fixtures. Configure a Neon URL through `DATABASE_URL` for hosted storage.
