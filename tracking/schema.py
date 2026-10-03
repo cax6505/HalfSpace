@@ -45,6 +45,8 @@ class ClipMetadata:
 
 @dataclass(frozen=True)
 class PlayerTrack:
+    """A player location in calibrated pitch metres, not image pixels."""
+
     track_id: str
     x: float | None
     y: float | None
@@ -64,6 +66,8 @@ class PlayerTrack:
 
 @dataclass(frozen=True)
 class BallObservation:
+    """A ball location in calibrated pitch metres."""
+
     x: float | None
     y: float | None
     state: BallState

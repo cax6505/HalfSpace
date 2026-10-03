@@ -12,6 +12,7 @@ from .schema import (
     TrackingFrame,
     validate_frame,
 )
+from .metrics import BallMetrics, PlayerMetrics, evaluate_ball, evaluate_player_id_switches
 
 __all__ = [
     "BallObservation",
@@ -24,4 +25,8 @@ __all__ = [
     "TrackingArtifact",
     "TrackingFrame",
     "validate_frame",
+    "BallMetrics",
+    "PlayerMetrics",
+    "evaluate_ball",
+    "evaluate_player_id_switches",
 ]
