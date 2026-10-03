@@ -13,6 +13,7 @@ from .schema import (
     validate_frame,
 )
 from .metrics import BallMetrics, PlayerMetrics, evaluate_ball, evaluate_player_id_switches
+from .postprocess import BallPostprocessConfig, postprocess_ball
 
 __all__ = [
     "BallObservation",
@@ -29,4 +30,6 @@ __all__ = [
     "PlayerMetrics",
     "evaluate_ball",
     "evaluate_player_id_switches",
+    "BallPostprocessConfig",
+    "postprocess_ball",
 ]
