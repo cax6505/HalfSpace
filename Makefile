@@ -1,4 +1,4 @@
-.PHONY: install ml-install ingest test api web label train evaluate export-onnx index eval-search promptfoo-search annotate-search scout-benchmark mcp demo-up demo-down e2e eval-gate
+.PHONY: install ml-install ingest test tracking-check api web label train evaluate export-onnx index eval-search promptfoo-search annotate-search scout-benchmark mcp demo-up demo-down e2e eval-gate
 
 install:
 	python3.12 -m pip install -e 'services/api[dev]'
@@ -13,6 +13,11 @@ ingest:
 
 test:
 	cd services/api && python3.12 -m pytest
+
+tracking-check:
+	python3.12 -m tracking.sample --output /tmp/halfspace-sample-tracking.json
+	python3.12 -m tracking.validate /tmp/halfspace-sample-tracking.json
+	python3.12 -m pytest tracking/tests
 
 api:
 	cd services/api && python3.12 -m app.start

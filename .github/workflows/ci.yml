@@ -36,6 +36,9 @@ jobs:
       - run: python -m pip install -e 'services/api[dev]'
       - run: cd services/api && python -m pytest
       - run: python services/api/evals/check_fixtures.py
+      - run: python -m tracking.sample --output /tmp/halfspace-sample-tracking.json
+      - run: python -m tracking.validate /tmp/halfspace-sample-tracking.json
+      - run: python -m pytest tracking/tests
       - name: Live Promptfoo parse regression (when API key is configured)
         if: ${{ env.OPENAI_API_KEY != '' }}
         run: cd services/api/evals && npx --yes promptfoo@latest eval -c promptfooconfig.yaml
