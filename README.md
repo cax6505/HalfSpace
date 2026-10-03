@@ -4,6 +4,16 @@ Football analytics workbench. The monorepo contains a Next.js product UI, a Fast
 
 The current public demo is intentionally honest: the bundled records are **SAMPLE DATA** and are not reconstructed from broadcast video. The tracking package in `tracking/` defines the production boundary for calibrated pitch coordinates, confidence, tracked/interpolated/lost ball states, team metadata, player roles, and evaluation annotations. It does not claim detector accuracy until an annotated broadcast clip is supplied.
 
+Generate the deterministic, explicitly labeled sample artifact used for contract
+development with:
+
+```bash
+/usr/bin/python3 -m tracking.sample --output artifacts/sample-tracking.json
+```
+
+This command creates sample data only; it is not a broadcast detector and must not
+be used as a tracking-quality result.
+
 ## Run the demo from a fresh clone
 
 Requires Docker Compose. The UI includes a local sample corpus, so its search, pitch selection, compare, dossier, trace, and evidence replay flows work without credentials.
