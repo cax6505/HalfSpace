@@ -14,6 +14,7 @@ from .schema import (
 )
 from .metrics import BallMetrics, PlayerMetrics, evaluate_ball, evaluate_player_id_switches
 from .postprocess import BallPostprocessConfig, postprocess_ball
+from .geometry import apply_homography, smooth_positions
 
 __all__ = [
     "BallObservation",
@@ -32,4 +33,6 @@ __all__ = [
     "evaluate_player_id_switches",
     "BallPostprocessConfig",
     "postprocess_ball",
+    "apply_homography",
+    "smooth_positions",
 ]
