@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { DEMO_DOSSIER, sequenceForId, type DossierClaimData, type DossierData } from "../lib/demo";
+import { DEMO_DOSSIER, DEMO_RESULTS, sequenceForId, type DossierClaimData, type DossierData } from "../lib/demo";
 import { SequencePlayer } from "./SequencePlayer";
 
 type TraceStep = { step: string; [key: string]: unknown };
@@ -29,18 +29,22 @@ async function consumeDossier(response: Response, onStep: (step: TraceStep) => v
 }
 
 export function DossierApp() {
-  const [team, setTeam] = useState("Arsenal");
-  const [question, setQuestion] = useState("Scout the team's transition attack, build-up, pressing triggers, and set pieces.");
+  const [team, setTeam] = useState("");
+  const [question, setQuestion] = useState("Scout the transition attack, build-up, pressing triggers, and set pieces.");
   const [report, setReport] = useState<DossierData | null>(null);
   const [busy, setBusy] = useState(false);
   const [latencyMs, setLatencyMs] = useState<number | null>(null);
-  const [notice, setNotice] = useState("Sample report · generate a live dossier when the API is configured.");
+  const [notice, setNotice] = useState("Load a match or clip to build an evidence-led dossier.");
   const [trace, setTrace] = useState<TraceStep[]>([]);
   const [traceOpen, setTraceOpen] = useState(false);
   const [activeClaim, setActiveClaim] = useState<DossierClaimData | null>(null);
   const [copied, setCopied] = useState(false);
 
   const generate = useCallback(async (teamName: string, prompt: string) => {
+    if (!teamName.trim()) {
+      setNotice("Select a team from the loaded match or clip first.");
+      return;
+    }
     const startedAt = performance.now();
     setBusy(true); setLatencyMs(null); setNotice("Planner is breaking the brief into evidence questions…"); setTrace([]); setTraceOpen(true); setActiveClaim(null);
     const url = new URL(window.location.href); url.searchParams.set("team", teamName); url.searchParams.set("q", prompt); window.history.pushState({}, "", `${url.pathname}${url.search}`);
@@ -61,8 +65,9 @@ export function DossierApp() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    setTeam(params.get("team") || "Arsenal"); setQuestion(params.get("q") || "Scout the team's transition attack, build-up, pressing triggers, and set pieces.");
-    setReport(DEMO_DOSSIER);
+    const initialTeam = params.get("team") || "";
+    setTeam(initialTeam); setQuestion(params.get("q") || "Scout the transition attack, build-up, pressing triggers, and set pieces.");
+    if (initialTeam) setReport(DEMO_DOSSIER);
     if (params.has("claim")) {
       const target = DEMO_DOSSIER.claims.find((claim) => claim.evidence_ids.includes(params.get("claim")!));
       if (target) setActiveClaim(target);
@@ -86,7 +91,7 @@ export function DossierApp() {
 
   return <main className={`product-shell dossier-shell ${activeClaim ? "drawer-open" : ""}`}>
     <header className="product-header"><Link className="brand" href="/"><span className="brand-mark" aria-hidden="true">H</span> HalfSpace</Link><nav aria-label="Main navigation"><Link href="/">Sequence search</Link><a href="/dossier" className="nav-current" aria-current="page">Scouting dossier</a><Link href="/design">Design lab</Link></nav><button className="control-button" type="button" onClick={share}>{copied ? "Link copied" : "Share report ↗"}</button></header>
-    <section className="dossier-hero"><div><span className="eyebrow">Scouting desk / intelligence brief</span><h1>{team}<br /><span>Matchup dossier</span></h1><p className="dossier-status" role="status" aria-live="polite"><span className={`status-dot ${busy ? "parsing" : "ready"}`} />{notice}</p></div><form className="dossier-request panel" onSubmit={submit}><label htmlFor="dossier-team">Team</label><input id="dossier-team" value={team} onChange={(event) => setTeam(event.target.value)} placeholder="Team name" /><label htmlFor="dossier-question">Scout brief</label><textarea id="dossier-question" rows={3} value={question} onChange={(event) => setQuestion(event.target.value)} /><button className="control-button accent-button" disabled={busy}>{busy ? "Building evidence…" : "Generate dossier"}</button></form></section>
+    <section className="dossier-hero"><div><span className="eyebrow">Scouting desk / intelligence brief</span><h1>{team || "No team selected"}<br /><span>Matchup dossier</span></h1><p className="dossier-status" role="status" aria-live="polite"><span className={`status-dot ${busy ? "parsing" : "ready"}`} />{notice}</p></div><form className="dossier-request panel" onSubmit={submit}><label htmlFor="dossier-team">Team from loaded clip</label><select id="dossier-team" value={team} onChange={(event) => setTeam(event.target.value)}><option value="">Select a team</option>{Array.from(new Set(DEMO_RESULTS.map((result) => result.team))).map((teamName) => <option key={teamName} value={teamName}>{teamName}</option>)}</select><label htmlFor="dossier-question">Scout brief</label><textarea id="dossier-question" rows={3} value={question} onChange={(event) => setQuestion(event.target.value)} /><button className="control-button accent-button" disabled={busy || !team}>{busy ? "Building evidence…" : "Generate dossier"}</button></form></section>
     <div className="dossier-toolbar"><span className="eyebrow">Evidence-led report · every claim opens its source plays</span><button className="text-button" aria-expanded={traceOpen} onClick={() => setTraceOpen((value) => !value)}>{traceOpen ? "Hide agent trace" : "Show agent trace"} {trace.length ? `(${trace.length})` : ""}</button></div>
     {traceOpen && <section className="trace-panel panel" aria-label="Agent trace"><div className="trace-heading"><div><span className="eyebrow">Live process</span><h2>Agent trace</h2></div><span className="trace-latency">{busy ? "Running · streaming" : `${trace.length} steps · ${latencyMs === null ? "latency pending" : `${latencyMs.toFixed(0)} ms`} `}</span></div>{busy && trace.length === 0 && <div className="trace-skeleton"><span /><span /><span /></div>}<ol className="trace-steps">{trace.map((step, index) => <li className="trace-step" key={`${step.step}-${index}`}><span className="trace-index">0{index + 1}</span><span><strong>{step.step.replaceAll("_", " ")}</strong><small>{Array.isArray(step.tool_names) ? step.tool_names.join(", ") : String(step.tool ?? "LangGraph node")} · {Object.entries(step).filter(([key]) => key !== "step" && key !== "tool" && key !== "tool_names").map(([key, value]) => `${key.replaceAll("_", " ")}: ${Array.isArray(value) ? value.length : String(value)}`).join(" · ")}</small></span><span className="trace-check">{busy && index === trace.length - 1 ? "RUN" : "DONE"}</span></li>)}</ol></section>}
 

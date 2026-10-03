@@ -7,8 +7,8 @@ export type DossierData = { overview: DossierClaimData; claims: DossierClaimData
 
 export const EMPTY_FILTERS: SearchFilters = { phase: "", zone: "", trigger: "", team: "", competition: "", outcome: "" };
 const tags = ["counter-attack", "build-up", "press-win-trigger", "zone-entry", "set-piece", "counter-attack", "build-up", "zone-entry"];
-const teams = ["Arsenal", "Manchester City", "Barcelona", "Liverpool", "Arsenal", "Bayern Munich", "Chelsea", "Real Madrid"];
-const competitions = ["Premier League", "Premier League", "La Liga", "Premier League", "Premier League", "Bundesliga", "Premier League", "La Liga"];
+const teams = ["Home sample", "Away sample", "North sample", "South sample", "East sample", "West sample", "Control sample", "Transition sample"];
+const competitions = Array.from({ length: teams.length }, () => "Open sample corpus");
 const summaries = [
   "Quick regain, vertical carry, and a runner breaking beyond the back line.",
   "Patient first phase draws pressure before a clean switch into the right half-space.",
@@ -20,31 +20,44 @@ const summaries = [
   "Wide overload opens the inside lane for a progressive carry.",
 ];
 
-function frameAt(index: number, tick: number, setPiece = false): SequenceFrame {
-  const progress = tick / 7;
-  const startX = index % 2 ? 27 : 22;
-  const startY = index % 3 ? 54 : 27;
-  const ball = setPiece ? { x: 118 - progress * 15, y: 5 + progress * 31 } : { x: startX + progress * 55, y: startY + progress * (index % 2 ? -27 : 25) };
-  const from = setPiece ? { x: 118 - Math.max(0, tick - 1) / 7 * 15, y: 5 + Math.max(0, tick - 1) / 7 * 31 } : { x: startX + Math.max(0, tick - 1) / 7 * 55, y: startY + Math.max(0, tick - 1) / 7 * (index % 2 ? -27 : 25) };
+function frameAt(index: number, tick: number, tag: string, teamName: string): SequenceFrame {
+  const setPiece = tag === "set-piece";
+  const before = tick < 6;
+  const after = tick > 17;
+  const actionProgress = Math.max(0, Math.min(1, (tick - 6) / 11));
+  const ball = setPiece
+    ? before ? { x: 77 - tick * 1.2, y: 26 + tick * 1.1 } : after ? { x: 102 - (tick - 18) * 3, y: 37 + (tick - 18) * .8 } : { x: 118 - actionProgress * 16, y: 5 + actionProgress * 32 }
+    : before ? { x: 80 - tick * 2.7, y: 39 + Math.sin(tick) * 4 } : after ? { x: 106 - (tick - 18) * 3.6, y: 53 - (tick - 18) * .7 } : { x: 64 + actionProgress * 42, y: 40 + actionProgress * (index % 2 ? -18 : 14) };
+  const previousProgress = Math.max(0, Math.min(1, (tick - 1 - 6) / 11));
+  const from = tick === 0 ? ball : setPiece
+    ? tick - 1 < 6 ? { x: 77 - (tick - 1) * 1.2, y: 26 + (tick - 1) * 1.1 } : tick - 1 > 17 ? { x: 102 - (tick - 1 - 18) * 3, y: 37 + (tick - 1 - 18) * .8 } : { x: 118 - previousProgress * 16, y: 5 + previousProgress * 32 }
+    : tick - 1 < 6 ? { x: 80 - (tick - 1) * 2.7, y: 39 + Math.sin(tick - 1) * 4 } : tick - 1 > 17 ? { x: 106 - (tick - 1 - 18) * 3.6, y: 53 - (tick - 1 - 18) * .7 } : { x: 64 + previousProgress * 42, y: 40 + previousProgress * (index % 2 ? -18 : 14) };
   const openPlayHome = [[5,40,1],[18,12,2],[22,30,4],[22,50,5],[18,68,3],[37,20,6],[41,40,8],[37,60,10],[57,16,7],[61,40,9],[57,64,11]];
   const openPlayAway = [[115,40,1],[101,13,2],[96,30,4],[96,50,5],[101,67,3],[83,18,7],[79,35,6],[79,54,8],[69,23,11],[67,47,9],[72,63,10]];
   const cornerHome = [[5,40,1],[88,17,2],[98,30,4],[99,49,5],[90,64,3],[101,25,6],[104,36,8],[100,55,10],[112,28,7],[110,43,9],[116,7,11]];
   const cornerAway = [[115,40,1],[107,25,2],[104,32,4],[104,47,5],[107,56,3],[97,23,6],[96,34,8],[96,48,10],[87,28,7],[89,44,9],[91,59,11]];
-  const homeLineup = setPiece ? cornerHome : openPlayHome;
-  const awayLineup = setPiece ? cornerAway : openPlayAway;
+  const cornerSequence = setPiece && !before && !after;
+  const homeLineup = cornerSequence ? cornerHome : openPlayHome;
+  const awayLineup = cornerSequence ? cornerAway : openPlayAway;
+  const phaseLabel = setPiece ? before ? "Opponent possession · lead-up to corner" : after ? "Opponent response · defensive transition" : `${teamName} attacking corner · delivery and box movement` : before ? "Opponent possession · build-up before regain" : after ? "Opponent response · defensive transition" : `${teamName} possession · ${tag.replaceAll("-", " ")}`;
+  const eventLabel = setPiece ? before ? "Opponent pass" : after ? "Clearance / counter" : tick === 6 ? "Corner" : tick > 14 ? "Second ball" : "Corner delivery" : before ? ["Pass", "Carry", "Pressure", "Pass", "Duel", "Pressure"][tick] : after ? tick === 18 ? "Turnover" : "Defensive recovery" : tick === 6 ? "Ball Recovery" : ["Pass", "Carry", "Pass", "Carry", "Shot"][tick % 5];
+  const turnoverLabel = setPiece ? tick === 6 ? "Corner awarded" : tick === 18 ? "Clearance · defend transition" : undefined : tick === 6 ? `${teamName} regain` : tick === 18 ? `${teamName} lose possession · defend transition` : undefined;
   return {
-    timeMs: tick * 420,
+    timeMs: tick * 1000,
     ball,
     players: [
-      ...homeLineup.map(([x,y,number], playerIndex) => ({ id: `h-${index}-${playerIndex}`, team: "home" as const, number, x: x + (setPiece ? -progress * (playerIndex === 10 ? 8 : playerIndex > 5 ? 2 : 0) : progress * (playerIndex > 7 ? 9 : 5)), y: y + (setPiece ? progress * (playerIndex % 2 ? 1 : -1) : Math.sin(progress * Math.PI + playerIndex) * 2) })),
-      ...awayLineup.map(([x,y,number], playerIndex) => ({ id: `a-${index}-${playerIndex}`, team: "away" as const, number, x: x + (setPiece ? -progress * (playerIndex > 5 ? 2 : 0) : -progress * 5), y: y + Math.sin(progress * Math.PI + playerIndex) * 1.5 })),
+      ...homeLineup.map(([x,y,number], playerIndex) => ({ id: `h-${index}-${playerIndex}`, team: "home" as const, number, x: x + (cornerSequence ? -actionProgress * (playerIndex === 10 ? 8 : playerIndex > 5 ? 2 : 0) : before ? 0 : after ? -(tick - 17) * 1.1 : actionProgress * (playerIndex > 7 ? 9 : 5)), y: y + (cornerSequence ? actionProgress * (playerIndex % 2 ? 1 : -1) : Math.sin(tick / 4 + playerIndex) * 1.3) })),
+      ...awayLineup.map(([x,y,number], playerIndex) => ({ id: `a-${index}-${playerIndex}`, team: "away" as const, number, x: x + (cornerSequence ? -actionProgress * (playerIndex > 5 ? 2 : 0) : after ? -(tick - 17) * 2 : before ? 0 : -actionProgress * 5), y: y + Math.sin(tick / 4 + playerIndex) * 1.2 })),
     ],
-    pass: tick ? { from, to: ball } : undefined,
+    pass: tick ? { from, to: ball, label: setPiece && cornerSequence ? "Corner delivery" : "Illustrative ball movement" } : undefined,
+    phaseLabel,
+    eventLabel,
+    turnoverLabel,
   };
 }
 
 export const DEMO_RESULTS: SequenceResult[] = tags.map((tag, index) => {
-  const frames = Array.from({ length: 8 }, (_, tick) => frameAt(index, tick, tag === "set-piece"));
+  const frames = Array.from({ length: 24 }, (_, tick) => frameAt(index, tick, tag, teams[index]));
   return {
     sequence_id: 4102 + index * 5,
     match_id: 3869685 + index,
@@ -55,7 +68,7 @@ export const DEMO_RESULTS: SequenceResult[] = tags.map((tag, index) => {
     team: teams[index],
     competition: competitions[index],
     summary: summaries[index],
-    sequence: { id: `demo-${4102 + index * 5}`, title: `${teams[index]} · ${tag.replaceAll("-", " ")}`, durationMs: 2940, frames, dataSource: "sample" },
+    sequence: { id: `demo-${4102 + index * 5}`, title: `${teams[index]} · ${tag.replaceAll("-", " ")}`, durationMs: 23500, frames, dataSource: "sample" },
   };
 });
 
@@ -90,7 +103,7 @@ export function demoSearch(query: string, filters: SearchFilters, exemplarId?: n
 }
 
 export const DEMO_DOSSIER: DossierData = {
-  overview: { statement: "Arsenal's sample profile is strongest when it regains the ball and attacks forward space quickly.", evidence_ids: ["sequence:4102"] },
+  overview: { statement: "The selected sample profile is strongest when it regains the ball and attacks forward space quickly.", evidence_ids: ["sequence:4102"] },
   claims: [
     { statement: "The counter-attack sample reaches the attacking third in three progressive actions.", evidence_ids: ["sequence:4102", "event:41021"], checks: [{ metric: "progressive actions", value: 3 }] },
     { statement: "Build-up sequences use a wider route before entering the final third.", evidence_ids: ["sequence:4107", "event:41071"] },

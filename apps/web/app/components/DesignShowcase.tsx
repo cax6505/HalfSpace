@@ -33,7 +33,7 @@ export function DesignShowcase() {
   const [showHeatmap, setShowHeatmap] = useState(true);
   const showcaseSequences = useMemo(() => Array.from({ length: 200 }, (_, index) => makeSequence(index + 1)), []);
   return <main className="page-shell">
-    <header className="site-header"><a className="brand" href="/"><span className="brand-mark" aria-hidden="true">H</span> HalfSpace</a><nav className="showcase-nav"><a href="/">Sequence search</a><a href="/dossier?team=Arsenal">Dossier</a><a href="/design" aria-current="page">Design system</a></nav></header>
+    <header className="site-header"><a className="brand" href="/"><span className="brand-mark" aria-hidden="true">H</span> HalfSpace</a><nav className="showcase-nav"><a href="/">Sequence search</a><a href="/dossier">Dossier</a><a href="/design" aria-current="page">Design system</a></nav></header>
     <section className="hero" aria-labelledby="page-title"><div><span className="eyebrow">Tactical sequence lab / 01</span><h1 id="page-title">Read the game<br />in its own shape.</h1></div><p>A broadcast analyst’s view of space, pressure, and progression. The pitch stays in focus; every mark carries meaning.</p></section>
 
     <section className="panel" aria-labelledby="player-title">

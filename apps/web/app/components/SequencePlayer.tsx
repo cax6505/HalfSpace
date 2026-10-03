@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState, type KeyboardEvent } from "re
 import { BallMarker, PassArrow, PlayerMarker, PressZone, type Point } from "./Markers";
 import { Pitch } from "./Pitch";
 
-export type SequenceFrame = { timeMs: number; ball: Point; players: readonly (Point & { id: string; team: "home" | "away"; number?: number; active?: boolean })[]; pass?: { from: Point; to: Point; label?: string }; pressZone?: { x: number; y: number; width: number; height: number }; visibleArea?: readonly number[] };
+export type BallState = "tracked" | "interpolated" | "lost";
+export type SequenceFrame = { timeMs: number; ball: Point; ballState?: BallState; ballConfidence?: number; players: readonly (Point & { id: string; team: "home" | "away"; number?: number; active?: boolean })[]; pass?: { from: Point; to: Point; label?: string }; pressZone?: { x: number; y: number; width: number; height: number }; visibleArea?: readonly number[]; eventLabel?: string; phaseLabel?: string; turnoverLabel?: string };
 export type Sequence = { id: string; title: string; durationMs: number; frames: readonly SequenceFrame[]; dataSource?: "statsbomb-360" | "event-locations" | "zone-grid" | "sample" };
 export type SequencePlayerProps = { sequence: Sequence; label?: string; autoPlay?: boolean; compact?: boolean };
 
@@ -83,10 +84,11 @@ export function SequencePlayer({ sequence, label = "Sequence playback", autoPlay
       {frame.pressZone && <PressZone {...frame.pressZone} />}
       {frame.pass && <PassArrow from={frame.pass.from} to={frame.pass.to} progress={1} label={frame.pass.label ?? "Pass"} />}
       {frame.players.map((player) => <PlayerMarker key={player.id} {...player} label={`Player ${player.number ?? player.id}`} active={player.active} />)}
-      <BallMarker {...frame.ball} />
+      {frame.ballState !== "lost" && <BallMarker {...frame.ball} state={frame.ballState} confidence={frame.ballConfidence} />}
     </Pitch></div>}
     <div className="panel-body">
-      {!compact && <p className="tracking-note">{sequence.dataSource === "statsbomb-360" ? `StatsBomb 360 snapshot · ${frame.players.length} observed players` : sequence.dataSource === "sample" ? "Illustrative 11v11 sample animation · not match tracking" : sequence.dataSource === "zone-grid" ? "Approximate zone-grid playback · rerun make ingest for event coordinates" : "Event locations only · complete player tracking unavailable for this match"}</p>}
+      {!compact && <p className="tracking-note">{sequence.dataSource === "statsbomb-360" ? `StatsBomb 360 snapshot · ${frame.players.length} observed players` : sequence.dataSource === "sample" ? "SAMPLE DATA · illustrative 11v11 animation, not broadcast tracking" : sequence.dataSource === "zone-grid" ? "Approximate zone-grid playback · rerun make ingest for event coordinates" : "Event locations only · complete player tracking unavailable for this match"}{frame.ballState && <span className={`ball-state ball-state-${frame.ballState}`}>Ball {frame.ballState}{frame.ballConfidence != null ? ` · ${Math.round(frame.ballConfidence * 100)}%` : ""}</span>}</p>}
+      {!compact && frame.eventLabel && <div className="playback-context" aria-live="polite"><span>{frame.phaseLabel}</span><strong>{frame.turnoverLabel ?? frame.eventLabel}</strong></div>}
       <div className="player-controls">
         <button className="control-button accent-button" type="button" onClick={togglePlay} disabled={reducedMotion} aria-label={playing ? "Pause sequence" : "Play sequence"} aria-pressed={playing}>{reducedMotion ? "Reduced motion" : playing ? "Pause" : "Play"}</button>
         <label className="sr-only" htmlFor={`scrubber-${sequence.id}`}>Playback position</label>

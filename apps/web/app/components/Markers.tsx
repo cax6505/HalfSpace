@@ -11,9 +11,10 @@ export function PlayerMarker({ x, y, label, team, active = false, number }: Play
   </g>;
 }
 
-export type BallMarkerProps = Point & { label?: string };
-export function BallMarker({ x, y, label = "Ball" }: BallMarkerProps) {
-  return <g transform={`translate(${x} ${y})`} role="img" aria-label={label}>
+export type BallMarkerProps = Point & { label?: string; state?: "tracked" | "interpolated"; confidence?: number };
+export function BallMarker({ x, y, label = "Ball", state = "tracked", confidence }: BallMarkerProps) {
+  const status = state === "interpolated" ? "interpolated" : "tracked";
+  return <g transform={`translate(${x} ${y})`} role="img" aria-label={`${label}, ${status}${confidence == null ? "" : `, ${Math.round(confidence * 100)} percent confidence`}`}>
     <circle r="2.4" fill="#fffdf5" stroke="#111713" strokeWidth=".45" />
     <path d="M-.8-.8 0-1.15 .8-.8 .55.15 0 .7 -.55.15Z" fill="#202720" />
   </g>;

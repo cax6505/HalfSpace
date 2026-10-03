@@ -5,18 +5,25 @@ test("command search streams editable filters and links results to the pitch", a
   await page.keyboard.press("Control+k");
   const command = page.getByRole("textbox", { name: "Search sequences in natural language" });
   await expect(command).toBeFocused();
-  await command.fill("Show Arsenal counter-attacks into the box");
+  await command.fill("Show sample counter-attacks into the box");
   await command.press("Enter");
   await expect(page.getByText("sample mode")).toBeVisible();
   await expect(page.getByLabel("Phase")).toHaveValue("counter-attack");
-  await expect(page.getByRole("heading", { name: /Arsenal.*counter attack/i })).toBeVisible();
+  const firstResult = page.locator(".result-card").first();
+  const firstResultLabel = await firstResult.locator(".result-kicker").innerText();
+  await expect(page.getByRole("heading", { name: /counter attack/i })).toBeVisible();
+  await expect(page.getByLabel("Playback position").first()).toHaveAttribute("max", "23");
+  await expect(page.locator(".playback-context").first()).toContainText("Opponent possession · build-up before regain");
 
   await page.getByLabel("team filter").fill("");
   await page.getByRole("button", { name: "Apply filters" }).click();
-  const secondTeam = page.locator(".result-card", { hasText: "Bayern Munich" });
-  await secondTeam.getByRole("button", { name: /Bayern Munich/ }).click();
-  await expect(page.locator(".pitch-panel-heading h2")).toContainText("Bayern Munich");
-  await expect(secondTeam).toContainText("Bayern Munich · Bundesliga");
+  const secondTeam = page.locator(".result-card").nth(1);
+  await expect(secondTeam).toBeVisible();
+  const secondResultLabel = await secondTeam.locator(".result-kicker").innerText();
+  expect(secondResultLabel).not.toBe(firstResultLabel);
+  await secondTeam.getByRole("button", { name: /counter attack/i }).click();
+  await expect(page.locator(".pitch-panel-heading h2")).toContainText("counter attack");
+  await expect(secondTeam).toContainText("Open sample corpus");
   await expect(page.locator(".pitch-svg [aria-label^='Player ']")).toHaveCount(22);
   await expect(page).toHaveURL(/selected=/);
 
@@ -28,7 +35,7 @@ test("command search streams editable filters and links results to the pitch", a
 });
 
 test("dossier claims open an evidence drawer with a playable source", async ({ page }) => {
-  await page.goto("/dossier?team=Arsenal", { waitUntil: "networkidle" });
+  await page.goto("/dossier?team=Home%20sample", { waitUntil: "networkidle" });
   await expect(page.getByRole("heading", { name: "The tactical picture" })).toBeVisible();
   await page.getByRole("button", { name: /Show agent trace/ }).click();
   await expect(page.getByRole("heading", { name: "Agent trace" })).toBeVisible();
